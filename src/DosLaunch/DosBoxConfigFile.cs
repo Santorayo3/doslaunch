@@ -13,13 +13,53 @@ internal static class DosBoxConfigFile
 
     private static readonly Regex MountLinePattern = new("^mount c\\s+\".*\"", RegexOptions.Multiline | RegexOptions.IgnoreCase);
     private static readonly Regex AutoexecSectionPattern = new(@"^\[autoexec\]", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+    private static readonly Regex ProgramLinePattern = new(@"^# Program: (.+)$", RegexOptions.Multiline);
 
     public static string GetConfigPath(string executablePath) => Path.ChangeExtension(executablePath, Extension);
+
+    /// <summary>
+    /// The config for one program. Programs sharing a base name (WILLY.EXE next to WILLY.BAT) would
+    /// otherwise share a config whose autoexec starts the wrong one, so the second program gets its
+    /// own file that keeps the extension.
+    /// </summary>
+    internal static string ResolveConfigPath(string executablePath)
+    {
+        string configPath = GetConfigPath(executablePath);
+        return File.Exists(configPath) && !ConfigBelongsTo(configPath, executablePath)
+            ? executablePath + Extension
+            : configPath;
+    }
+
+    /// <summary>
+    /// Whether the config was made for the given program. Configs that do not name their program (e.g.
+    /// hand-written ones) are left alone.
+    /// </summary>
+    private static bool ConfigBelongsTo(string configPath, string executablePath)
+    {
+        try
+        {
+            Match match = ProgramLinePattern.Match(File.ReadAllText(configPath));
+            if (!match.Success)
+            {
+                return true;
+            }
+
+            string configuredProgram = match.Groups[1].Value.Trim();
+            return string.Equals(
+                Path.GetFileName(configuredProgram),
+                Path.GetFileName(executablePath),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
+    }
 
     /// <summary>Returns the config to use, creating it when missing. <c>null</c> means launching without one.</summary>
     public static string? EnsureConfig(string executablePath, string[] programArguments, AppSettings settings, DosBoxFlavor flavor)
     {
-        string configPath = GetConfigPath(executablePath);
+        string configPath = ResolveConfigPath(executablePath);
         if (File.Exists(configPath))
         {
             Log.Write($"Using existing DOSBox config: {configPath}");
@@ -170,6 +210,13 @@ internal static class DosBoxConfigFile
     {
         // Classic DOSBox does not accept a quoted command name, so only quote when it is needed.
         string program = programFileName.Contains(' ') ? $"\"{programFileName}\"" : programFileName;
+
+        // A batch file replaces the autoexec batch unless it is called, which would swallow the "exit".
+        if (Path.GetExtension(programFileName).Equals(".bat", StringComparison.OrdinalIgnoreCase))
+        {
+            program = $"call {program}";
+        }
+
         var command = new StringBuilder(program);
         foreach (string argument in programArguments)
         {

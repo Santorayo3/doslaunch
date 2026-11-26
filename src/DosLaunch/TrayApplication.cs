@@ -21,7 +21,7 @@ internal sealed class TrayApplication : ApplicationContext
         _notifyIcon = new NotifyIcon
         {
             Icon = _icon,
-            Text = "DOS Launch - 16-bit programs start in DOSBox-X",
+            Text = "DOS Launch - DOS programs start in DOSBox-X",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -75,7 +75,7 @@ internal sealed class TrayApplication : ApplicationContext
 
     /// <summary>
     /// Hidden top-level window that Windows notifies when the session ends (shutdown, restart, logoff).
-    /// The process is terminated without unwinding normal exit paths, so the .exe association has to be
+    /// The process is terminated without unwinding normal exit paths, so the program associations have to be
     /// restored from here instead of relying on the cleanup in <see cref="Program"/>.
     /// </summary>
     private sealed class SessionEndWatcher : NativeWindow
@@ -105,8 +105,8 @@ internal sealed class TrayApplication : ApplicationContext
             switch (m.Msg)
             {
                 case WmEndSession when m.WParam != IntPtr.Zero:
-                    Log.Write("Session is ending, removing exe interception.");
-                    ExeFileAssociation.Unregister();
+                    Log.Write("Session is ending, removing program interception.");
+                    ProgramFileAssociation.Unregister();
                     // Shut down from a fresh message so the window is not destroyed inside this handler.
                     PostMessage(Handle, WmExitAfterSessionEnd, IntPtr.Zero, IntPtr.Zero);
                     break;

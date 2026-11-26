@@ -16,13 +16,13 @@ internal static class Program
         {
             switch (args[0].ToLowerInvariant())
             {
-                case ExeFileAssociation.LaunchSwitch:
+                case ProgramFileAssociation.LaunchSwitch:
                     return ProgramLauncher.Launch(args[1..]);
                 case RegisterSwitch:
-                    ExeFileAssociation.Register();
+                    ProgramFileAssociation.Register();
                     return 0;
                 case UnregisterSwitch:
-                    ExeFileAssociation.Unregister();
+                    ProgramFileAssociation.Unregister();
                     return 0;
             }
         }
@@ -50,13 +50,13 @@ internal static class Program
 
         try
         {
-            ExeFileAssociation.Register();
+            ProgramFileAssociation.Register();
         }
         catch (Exception ex)
         {
-            Log.Write($"Failed to register exe interception: {ex}");
+            Log.Write($"Failed to register program interception: {ex}");
             MessageBox.Show(
-                $"Could not take over .exe launches:{Environment.NewLine}{ex.Message}",
+                $"Could not take over program launches:{Environment.NewLine}{ex.Message}",
                 "DOS Launch",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -69,7 +69,7 @@ internal static class Program
         }
         finally
         {
-            ExeFileAssociation.Unregister();
+            ProgramFileAssociation.Unregister();
         }
 
         return 0;

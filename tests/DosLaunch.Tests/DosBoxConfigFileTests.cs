@@ -17,6 +17,36 @@ public sealed class DosBoxConfigFileTests : IDisposable
     }
 
     [Fact]
+    public void ResolveConfigPath_SeparatesProgramsThatShareABaseName()
+    {
+        // WILLY.EXE and WILLY.BAT cannot share one config: each autoexec starts a different program.
+        string exeConfig = Path.Combine(_directory, "WILLY.doslaunch.conf");
+        File.WriteAllText(exeConfig, $"# Program: {Path.Combine(_directory, "WILLY.EXE")}{Environment.NewLine}");
+
+        Assert.Equal(exeConfig, DosBoxConfigFile.ResolveConfigPath(Path.Combine(_directory, "WILLY.EXE")));
+        Assert.Equal(
+            Path.Combine(_directory, "WILLY.BAT.doslaunch.conf"),
+            DosBoxConfigFile.ResolveConfigPath(Path.Combine(_directory, "WILLY.BAT")));
+    }
+
+    [Fact]
+    public void ResolveConfigPath_KeepsAConfigThatDoesNotNameItsProgram()
+    {
+        string configPath = Path.Combine(_directory, "WILLY.doslaunch.conf");
+        File.WriteAllText(configPath, $"[autoexec]{Environment.NewLine}WILLY.EXE{Environment.NewLine}");
+
+        Assert.Equal(configPath, DosBoxConfigFile.ResolveConfigPath(Path.Combine(_directory, "WILLY.BAT")));
+    }
+
+    [Fact]
+    public void ResolveConfigPath_UsesThePlainNameWhileNoConfigExists()
+    {
+        Assert.Equal(
+            Path.Combine(_directory, "WILLY.doslaunch.conf"),
+            DosBoxConfigFile.ResolveConfigPath(Path.Combine(_directory, "WILLY.BAT")));
+    }
+
+    [Fact]
     public void Render_StartsFullscreenWithAspectCorrection()
     {
         string config = DosBoxConfigFile.Render(@"C:\Games\Doom\DOOM.EXE", [], CreateProfile(), null, DosBoxFlavor.DosBox);
@@ -58,6 +88,14 @@ public sealed class DosBoxConfigFileTests : IDisposable
 
         Assert.Contains("mount d \"C:\\Games\\Doom\" -t cdrom", config);
         Assert.DoesNotContain("imgmount", config);
+    }
+
+    [Fact]
+    public void Render_CallsBatchFilesSoDosBoxStillQuitsAfterwards()
+    {
+        string config = DosBoxConfigFile.Render(@"C:\Games\Doom\START.BAT", [], CreateProfile(), null, DosBoxFlavor.DosBox);
+
+        Assert.Contains("call START.BAT", config);
     }
 
     [Fact]

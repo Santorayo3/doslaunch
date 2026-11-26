@@ -24,7 +24,7 @@ internal static class ProgramLauncher
             return 1;
         }
 
-        return ExecutableInspector.IsDosExecutable(file)
+        return ExecutableInspector.IsDosProgram(file)
             ? LaunchInDosBox(file, programArguments)
             : LaunchWindowsProgram(file, programArguments);
     }
@@ -85,8 +85,8 @@ internal static class ProgramLauncher
         {
             using var process = Process.Start(startInfo);
             Log.Write(configPath is null
-                ? $"Started {displayName} for 16-bit program: {file}"
-                : $"Started {displayName} for 16-bit program: {file} (config: {configPath})");
+                ? $"Started {displayName} for DOS program: {file}"
+                : $"Started {displayName} for DOS program: {file} (config: {configPath})");
             return 0;
         }
         catch (Win32Exception ex)
@@ -97,20 +97,34 @@ internal static class ProgramLauncher
         }
     }
 
+    /// <summary>
+    /// Starts a program the way Windows would. Intercepted file types must never be shell-executed,
+    /// because the shell would hand them straight back to this launcher.
+    /// </summary>
     private static int LaunchWindowsProgram(string file, string[] programArguments)
     {
-        bool isExecutable = string.Equals(Path.GetExtension(file), ".exe", StringComparison.OrdinalIgnoreCase);
+        bool isBatchFile = string.Equals(Path.GetExtension(file), ".bat", StringComparison.OrdinalIgnoreCase);
 
-        var startInfo = new ProcessStartInfo(file)
+        var startInfo = new ProcessStartInfo(isBatchFile
+            ? Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe"
+            : file)
         {
-            // The target must never be shell-executed: the shell would hand it straight back to us.
-            UseShellExecute = !isExecutable,
+            UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(file) ?? string.Empty,
         };
 
-        foreach (string argument in programArguments)
+        if (isBatchFile)
         {
-            startInfo.ArgumentList.Add(argument);
+            // A batch file cannot be started directly, so it is handed to the command interpreter the
+            // same way Explorer does. /s lets cmd strip exactly the two quotes around the command.
+            startInfo.Arguments = $"/d /s /c \"\"{file}\" {string.Join(' ', programArguments)}\"";
+        }
+        else
+        {
+            foreach (string argument in programArguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
         }
 
         try
@@ -137,7 +151,7 @@ internal static class ProgramLauncher
             : $"The configured DOSBox executable was not found:{Environment.NewLine}{settings.DosBoxPath}";
 
         DialogResult answer = MessageBox.Show(
-            $"\"{Path.GetFileName(file)}\" is a 16-bit DOS program and needs DOSBox.{Environment.NewLine}{Environment.NewLine}" +
+            $"{Path.GetFileName(file)} is a DOS program and needs DOSBox.{Environment.NewLine}{Environment.NewLine}" +
             $"{reason}{Environment.NewLine}{Environment.NewLine}" +
             "Do you want to select the DOSBox executable now?",
             "DOS Launch",

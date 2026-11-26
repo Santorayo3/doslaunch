@@ -68,6 +68,47 @@ public sealed class ExecutableInspectorTests : IDisposable
         Assert.False(ExecutableInspector.IsDosExecutable(Path.Combine(_directory, "missing.exe")));
     }
 
+    [Fact]
+    public void ComFile_IsDosProgram()
+    {
+        // COM programs have no header at all, so the extension alone marks them as DOS.
+        string path = WriteFile([0xE9, 0x00, 0x00], ".com");
+
+        Assert.True(ExecutableInspector.IsDosProgram(path));
+    }
+
+    [Fact]
+    public void RenamedWindowsExecutableWithComExtension_IsNotDosProgram()
+    {
+        string path = WriteFile(CreateMzImage(eLfanew: 0x40, "PE"), ".com");
+
+        Assert.False(ExecutableInspector.IsDosProgram(path));
+    }
+
+    [Fact]
+    public void RenamedDosExecutableWithComExtension_IsDosProgram()
+    {
+        string path = WriteFile(CreateMzImage(eLfanew: 0), ".com");
+
+        Assert.True(ExecutableInspector.IsDosProgram(path));
+    }
+
+    [Fact]
+    public void WindowsExecutable_IsNotDosProgram()
+    {
+        string path = WriteFile(CreateMzImage(eLfanew: 0x40, "PE"), ".exe");
+
+        Assert.False(ExecutableInspector.IsDosProgram(path));
+    }
+
+    [Fact]
+    public void DosExecutable_IsDosProgram()
+    {
+        string path = WriteFile(CreateMzImage(eLfanew: 0), ".exe");
+
+        Assert.True(ExecutableInspector.IsDosProgram(path));
+    }
+
     private static byte[] CreateMzImage(int eLfanew, string? signature = null)
     {
         byte[] header = new byte[0x40];
