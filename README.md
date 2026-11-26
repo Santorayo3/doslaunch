@@ -41,8 +41,8 @@ associations are restored as soon as the application exits.
 | Requirement | Notes |
 | --- | --- |
 | Windows 10/11 | Uses WinForms, the registry and Win32 APIs, so it is Windows-only. |
-| [.NET 10 SDK](https://dotnet.microsoft.com/download) | To build from source. A published build only needs the .NET 10 Desktop Runtime. |
 | DOSBox-X, DOSBox or DOSBox SVN | You select the executable once; DOSBox-X is recommended because more games run correctly with it. |
+| [.NET 10 SDK](https://dotnet.microsoft.com/download) | Only needed to build from source. The self-contained build bundles the runtime, and the framework-dependent build needs the .NET 10 Desktop Runtime on the target machine. |
 
 No NuGet packages are required by the application itself; the test project uses xUnit.
 
@@ -60,12 +60,43 @@ dotnet run --project src\DosLaunch\DosLaunch.csproj
 # Run the tests
 dotnet test doslaunch.slnx
 
-# Create a distributable build
-dotnet publish src\DosLaunch\DosLaunch.csproj -c Release
+# Create both distribution builds (see below)
+.\build.ps1
 ```
 
-The published application ends up in `src\DosLaunch\bin\Release\net10.0-windows\publish\`. Copy that
-folder wherever you like (for example `%LOCALAPPDATA%\Programs\DOS Launch`) and start `DosLaunch.exe`.
+### Distribution builds
+
+`build.ps1` publishes two variants into `dist\` and zips each of them:
+
+| Build | Output | Requires on the target machine |
+| --- | --- | --- |
+| `self-contained` | `dist\self-contained\DosLaunch.exe` — a single ~100 MB executable with the .NET runtime bundled (nothing is installed system-wide) | Nothing; just Windows |
+| `framework-dependent` | `dist\framework-dependent\` — a small folder with `DosLaunch.exe`, `DosLaunch.dll` and its config | The [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
+
+Use the self-contained build when you hand the application to someone who should not have to install
+anything; use the framework-dependent build when .NET is already present and the download should stay small.
+Each build also needs the `assets` folder (tray icon) next to `DosLaunch.exe`, so distribute the folder or the
+zip, not the bare executable.
+
+If PowerShell refuses to run the script (`… running scripts is disabled on this system`), start it with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1
+```
+
+The two variants are plain SDK publish profiles, so they can also be invoked directly (they are also usable
+from Visual Studio's *Publish* dialog):
+
+```powershell
+dotnet publish src\DosLaunch\DosLaunch.csproj -p:PublishProfile=SelfContained-win-x64 -o dist\self-contained
+dotnet publish src\DosLaunch\DosLaunch.csproj -p:PublishProfile=FrameworkDependent-win-x64 -o dist\framework-dependent
+```
+
+Both profiles target `win-x64`; change `RuntimeIdentifier` in
+`src\DosLaunch\Properties\PublishProfiles\*.pubxml` for another architecture.
+
+Copy the resulting folder wherever you like (for example `%LOCALAPPDATA%\Programs\DOS Launch`) and start
+`DosLaunch.exe`.
 
 ---
 
@@ -247,8 +278,11 @@ configs portable between builds.
 
 ```
 doslaunch.slnx                    Solution (app + tests)
+build.ps1                         Publishes the framework-dependent and self-contained builds
 assets/prog_icon.png              Tray icon
 src/DosLaunch/                    The WinForms tray application
+  DosLaunch.csproj                Project file (net10.0-windows, WinForms)
+  Properties/PublishProfiles/     win-x64 publish profiles for both distribution builds
   Program.cs                      Entry point and command-line switches
   TrayApplication.cs              Tray icon, menu and session-end handling
   ProgramFileAssociation.cs       Registry interception and restore
