@@ -1,13 +1,13 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Publishes DOS Launch as both available distribution builds.
+    Publishes Double-Click DOS as both available distribution builds.
 
 .DESCRIPTION
     Creates dist\framework-dependent (small, needs the .NET 10 Desktop Runtime) and
     dist\self-contained (single exe with the runtime inside, needs nothing installed), plus a zip archive
     of each. The architecture is set by RuntimeIdentifier in the publish profiles
-    (src\DosLaunch\Properties\PublishProfiles).
+    (src\DoubleClickDOS\Properties\PublishProfiles).
 
 .EXAMPLE
     .\build.ps1
@@ -18,7 +18,7 @@ param()
 $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
-$project = Join-Path $root 'src\DosLaunch\DosLaunch.csproj'
+$project = Join-Path $root 'src\DoubleClickDOS\DoubleClickDOS.csproj'
 $dist = Join-Path $root 'dist'
 
 $builds = [ordered]@{

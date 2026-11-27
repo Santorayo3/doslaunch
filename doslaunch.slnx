@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/DosLaunch/DosLaunch.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/DosLaunch.Tests/DosLaunch.Tests.csproj" />
-  </Folder>
-</Solution>

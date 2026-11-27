@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DoubleClickDOS/DoubleClickDOS.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DoubleClickDOS.Tests/DoubleClickDOS.Tests.csproj" />
+  </Folder>
+</Solution>

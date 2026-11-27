@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DoubleClickDOS</RootNamespace>
+    <AssemblyName>DoubleClickDOS</AssemblyName>
+    <AssemblyTitle>Double-Click DOS</AssemblyTitle>
+    <Product>Double-Click DOS</Product>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\assets\prog_icon.png" Link="assets\prog_icon.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\assets\about.png" Link="assets\about.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DoubleClickDOS.Tests" />
+  </ItemGroup>
+
+</Project>
