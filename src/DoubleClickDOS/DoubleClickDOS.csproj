@@ -16,6 +16,8 @@
   <ItemGroup>
     <None Include="..\..\assets\prog_icon.png" Link="assets\prog_icon.png" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\assets\about.png" Link="assets\about.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Restore-File-Associations.reg" Link="Restore-File-Associations.reg"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

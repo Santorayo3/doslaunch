@@ -24,7 +24,7 @@ internal static class ProgramFileAssociation
     private const string CommandValue = "Command";
 
     /// <summary>ProgIDs of the file types whose shell launches are intercepted.</summary>
-    private static readonly string[] ProgramClasses = [ExeClass, "comfile", "batfile"];
+    internal static readonly string[] ProgramClasses = [ExeClass, "comfile", "batfile"];
 
     public static void Register()
     {

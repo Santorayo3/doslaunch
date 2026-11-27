@@ -163,6 +163,14 @@ Double-Click DOS are removed again.
 Because Windows kills the process at logoff/shutdown without running normal cleanup code, a hidden window
 listens for `WM_ENDSESSION` and unregisters the interception from there.
 
+`Restore-File-Associations.reg` (next to the executable and in every release archive) is the way back when the
+application itself is no longer available: it deletes the three per-user `…\shell\open\command` keys, so the
+machine-wide handlers apply again. Double-clicking a `.reg` file keeps working in exactly that state, because the
+shell resolves `regfile` to `regedit.exe "%1"` and starts `regedit` directly — only executables themselves are
+routed through the interception, not the programs the shell starts for other file types. Values that existed
+before the first start are not restored by the script (a registry script cannot branch); they stay in
+`HKCU\Software\DosLaunch\Backup\<class>` for a later `--unregister` or a manual restore.
+
 ### 2. Deciding what was launched
 
 [ProgramLauncher](./src/DoubleClickDOS/ProgramLauncher.cs) receives the file and its arguments and asks
@@ -306,6 +314,7 @@ the new locations.
 ```
 doubleclickdos.slnx              Solution (app + tests)
 build.ps1                        Publishes the framework-dependent and self-contained builds
+Restore-File-Associations.reg    Recovery script that removes the interception without the app
 assets/prog_icon.png             Tray icon
 assets/about.png                 Logo in the About window
 src/DoubleClickDOS/              The WinForms tray application
@@ -366,6 +375,13 @@ tests/DoubleClickDOS.Tests/      xUnit tests for detection, parsing, presets and
   the selected DOSBox executable; if you moved or replaced DOSBox, select it again so the flag is applied.
 - **Associations stuck after a crash.** Run `DoubleClickDOS.exe --unregister` once; it restores the backed-up
   commands and removes the state key.
+- **Programs no longer start because `DoubleClickDOS.exe` is gone.** If the application was deleted, moved or
+  blocked while its interception was still installed, every double-click fails with
+  `Windows cannot find '…\DoubleClickDOS.exe'`. Double-click `Restore-File-Associations.reg` (next to the
+  executable and in the release archive) and confirm the UAC and import prompts; `.exe`, `.com` and `.bat`
+  files are handled by Windows again. If the script is not at hand, a program can still be started with
+  **Run as administrator** (`runas` is a separate verb, not intercepted) or by opening any document such as an
+  `.html` or `.txt` file from Explorer.
 
 ## Limitations
 
@@ -373,6 +389,10 @@ tests/DoubleClickDOS.Tests/      xUnit tests for detection, parsing, presets and
   users are not affected.
 - While running, *all* `.exe`/`.com`/`.bat` double-clicks take a short detour through Double-Click DOS, including
   Windows programs.
+- Deleting `DoubleClickDOS.exe` while the interception is still installed — for example after a power cut that
+  skipped the cleanup — leaves the per-user commands pointing at a missing file, and double-clicking a program
+  then fails until `--unregister` or `Restore-File-Associations.reg` is used. The machine-wide associations are
+  never modified, and nothing else in Windows is affected.
 - Detection is heuristic: heavily packed or non-standard images may be misclassified, and batch files that
   depend on variables, `call` chains or installed DOS programs cannot always be resolved.
 - Only `.cue` and `.iso` disc images are mounted automatically; multi-disc games need manual `imgmount` edits.

@@ -1,0 +1,23 @@
+Windows Registry Editor Version 5.00
+
+; Double-Click DOS - recovery script
+;
+; Removes the per-user program interception for .exe, .com and .bat files, so the machine-wide
+; handlers in HKLM apply again. Use it when Double-Click DOS is gone (deleted, moved or blocked)
+; but its interception is still installed and double-clicking a program fails with
+; "Windows cannot find '...\DoubleClickDOS.exe'".
+;
+; Double-click this file, confirm the UAC prompt and the import prompt.
+;
+; This still works in exactly that situation: Windows opens .reg files through the regfile ProgID
+; ("regedit.exe %1") and starts regedit directly, so the broken exefile association is not used.
+;
+; Only the current user's keys are touched; nothing under HKLM is modified. Values that existed
+; before the first start are not restored here (a registry script cannot branch); they are still
+; stored in HKCU\Software\DosLaunch\Backup\<class> for a later unregister or a manual restore.
+
+[-HKEY_CURRENT_USER\Software\Classes\exefile\shell\open\command]
+
+[-HKEY_CURRENT_USER\Software\Classes\comfile\shell\open\command]
+
+[-HKEY_CURRENT_USER\Software\Classes\batfile\shell\open\command]
