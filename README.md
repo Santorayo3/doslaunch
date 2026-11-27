@@ -1,4 +1,4 @@
-# DOS Launch
+# Double-Click DOS
 
 DOS Launch is a small Windows tray application that makes old DOS games start in
 [DOSBox](https://www.dosbox.com/) (or [DOSBox-X](https://dosbox-x.com/)) when you double-click them in
@@ -160,8 +160,10 @@ listens for `WM_ENDSESSION` and unregisters the interception from there.
 - `.com` — raw code without a header, therefore treated as DOS unless the file actually starts with an `MZ`
   signature and that image carries a Windows header (e.g. a renamed Windows executable).
 - `.exe` — an `MZ` header is required. The offset at `0x3C` (`e_lfanew`) is followed: if it points at a `PE`
-  (32/64-bit Windows) or `NE` (16-bit Windows) signature, the program is started by Windows; every other
-  image — including DOS extenders such as `LE` — belongs in DOSBox.
+  (32/64-bit Windows) signature, the program is started by Windows; every other image — including DOS
+  extenders such as `LE` — belongs in DOSBox. An `NE` (16-bit) signature is a Windows program only when the
+  image is not a protected-mode DOS program; Borland's 16-bit protected-mode games are linked as `NE` too and
+  are recognised by the `RTM` runtime manager they import or their `PM STUB` DOS stub.
 - `.bat` — [BatchFileInspector](./src/DosLaunch/BatchFileInspector.cs) reads the commands, follows `cd`, and
   checks whether any referenced `.exe`/`.com` (the extension is appended when omitted, as DOS would) is a DOS
   program. Comments, `echo`/`title` lines, variables, wildcards and missing files are ignored, and the scan is
